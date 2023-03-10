@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const slugify = require('slugify');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -82,6 +83,29 @@ const tourSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
+
+tourSchema.virtual('durationWeek').get(function () {
+  return this.duration / 7;
+});
+
+// When request is save, this middle will run
+tourSchema.pre('save', function (next) {
+  // this.slug = slugify(this.name, { lower: true });
+  this.slug = "qwert";
+  next();
+});
+
+// When request is contain find (findOne, findAndUpdate,...), this middle will run before controller execute
+tourSchema.pre(/^find/, function (next) {
+  this.start = Date.now();
+  next();
+});
+// When request is contain find (findOne, findAndUpdate,...), this middle will run after controller execute
+tourSchema.post(/^find/, function (docs, next) {
+  console.log(`Query took ${Date.now() - this.start} milliseconds!`);
+  next();
+});
 
 const Tour = mongoose.model('Tour', tourSchema);
 
