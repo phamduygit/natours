@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+// const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -77,6 +78,34 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      description: String,
+      address: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [String],
+        day: Number,
+        description: String,
+      },
+    ],
+    guides: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     toJSON: { virtuals: true },
@@ -84,29 +113,50 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
-
 tourSchema.virtual('durationWeek').get(function () {
   return this.duration / 7;
 });
 
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'tour'
+})
+
 // When request is save, this middle will run
 tourSchema.pre('save', function (next) {
-  // this.slug = slugify(this.name, { lower: true });
-  this.slug = "qwert";
+  this.slug = slugify(this.name, { lower: true });
+  // this.slug = 'qwert';
   next();
 });
+
+// When request is save, this middleware will run before save and get tour guides
+// This middleware use Embedding
+// tourSchema.pre('save', async function (next) {
+//   const guidesPromise = this.guides.map(async (id) => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromise);
+//   next();
+// });
 
 // When request is contain find (findOne, findAndUpdate,...), this middle will run before controller execute
 tourSchema.pre(/^find/, function (next) {
   this.start = Date.now();
   next();
 });
+
 // When request is contain find (findOne, findAndUpdate,...), this middle will run after controller execute
 tourSchema.post(/^find/, function (docs, next) {
   console.log(`Query took ${Date.now() - this.start} milliseconds!`);
   next();
 });
 
+tourSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v -changePasswordAt'
+  })
+  next();
+})
 const Tour = mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;

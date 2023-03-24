@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 const AppError = require('./utils/appError');
 const globalErroHandler = require('./controllers/errorControler')
 const app = express();
@@ -53,6 +54,8 @@ app.use('/api', apiLimiter);
 app.use('/api/v1/tours', tourRouter);
 // If router is /api/v1/users, userRouter will run
 app.use('/api/v1/users', userRouter);
+// IF router is /api/v1/reviews, reviewRoute will run
+app.use('/api/v1/reviews', reviewRouter);
 // If router is not existed, server will return error message
 app.all('*', (req, res, next) => {
   next(new AppError(`Can not find url ${req.originalUrl} on this server`, 500));

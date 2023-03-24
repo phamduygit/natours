@@ -18,7 +18,7 @@ const userSchema = new moongose.Schema({
   photo: String,
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'lead-guide', 'guide'],
     default: 'user',
   },
   password: {
@@ -41,7 +41,8 @@ const userSchema = new moongose.Schema({
   passwordResetExpires: Date,
   active: {
     type: Boolean,
-    default: true
+    default: true,
+    select: false
   }
 });
 
@@ -75,7 +76,6 @@ userSchema.methods.isCorrectPassword = async function (
 userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
   if (this.changePasswordAt) {
     const timestampChangePassword = this.changePasswordAt.getTime() / 1000;
-    console.log(timestampChangePassword, JWTTimestamp);
     return JWTTimestamp < timestampChangePassword;
   }
   return false;
