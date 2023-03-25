@@ -1,34 +1,44 @@
-const dotevn = require('dotenv');
 const mongoose = require('mongoose');
-dotevn.config({ path: './config.env' });
-const app = require('./app');
-const port = process.env.PORT || 3000;
+const dotenv = require('dotenv');
 
-// Replacing password for mongodb link
+process.on('uncaughtException', err => {
+  console.log('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  process.exit(1);
+});
+
+dotenv.config({ path: './config.env' });
+const app = require('./app');
+
 const DB = process.env.DATABASE.replace(
   '<PASSWORD>',
   process.env.DATABASE_PASSWORD
 );
 
-// Set mode for mongose
-mongoose.set('strictQuery', false);
-// Try to connect with mongdo db
 mongoose
   .connect(DB, {
-    // Set up config for connect database
     useNewUrlParser: true,
-    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false
   })
-  .then((result) => {
-    // Connect success
-    console.log('DB connection successful!');
-  })
-  .catch(err => {
-    // Connect error
-    console.log(err);
-  })
+  .then(() => console.log('DB connection successful!'));
 
-// Create event loop for listening request from the borwser
-app.listen(port, () => {
-  console.log(`App runing on port ${port}`);
+const port = process.env.PORT || 3000;
+const server = app.listen(port, () => {
+  console.log(`App running on port ${port}...`);
+});
+
+process.on('unhandledRejection', err => {
+  console.log('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.log(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM RECEIVED. Shutting down gracefully');
+  server.close(() => {
+    console.log('💥 Process terminated!');
+  });
 });
